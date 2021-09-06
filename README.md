@@ -1,5 +1,11 @@
-# Laravel Links
+<div align="center">
 
+# Let's Build : A Linktree Clone
+> Technology Used : Laravel-7, Bootstrap,
+    
+</div>
+
+## Project-Details :
 This is a demo application showing how to create a [linktr.ee](https://linktr.ee) clone using the [Laravel](https://laravel.com) PHP framework.
 
 This project comprises three simple data models and related tables:
