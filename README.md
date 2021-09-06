@@ -17,3 +17,6 @@ This project comprises three simple data models and related tables:
 This demo app makes use of Laravel's default bootstrapped views and authentication routes. There's a very basic dashboard that a user is directed to after logging in where they can see their links, view the amount of visits for each, add a new link, or modify the display settings on their link page.
 
 Visiting a particular user's links page displays a simple list of their added links, with the background color and text color they selected on their settings page.
+
+## Database Schema :
+- Visit this - https://github.com/Shahed-Chy-Suzan/linktree-clone/blob/master/z_others/db-linktree-clone.png
