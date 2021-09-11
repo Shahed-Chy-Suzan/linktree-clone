@@ -1,0 +1,774 @@
+
+//===========================================================================================
+
+			//-----******------ Linktree Clone -------******--------//
+									***---	Laravel-7 ---***
+
+//============================================================================================
+
+
+
+//---------------------------------------------------------------------------------------------------------------------------------------------
+				//-------------- Resources of Owner --------------
+						-- YouTube: https://www.youtube.com/watch?v=30qk04BG9G4&list=WL&index=9
+						-- GitHub: https://github.com/aschmelyun/laravel-links
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+//---------------------------------------------------------------------------------------------------------------------------------------------
+		-- My_GitHub_repo: https://github.com/Shahed-Chy-Suzan/linktree-clone
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+//---------------------------------------------------------------------------------------------------------------------------------------------
+														------ New in this project------
+//---------------------------------------------------------------------------------------------------------------------------------------------
+		-- parent model down
+		--hasManyThrough(FinalDestination::class, intermediatary::class), //ekhane each visits belongsTo a links, and that links belongsTo an User.	Now however if we skip links table and want to see how many visits a particular user's has in his account, this relationship is--> goto User Model, make a "hasManyThrough" relation,//here hasManyThrough accept two argumant (1) the final class u want to collect & (2) the intermediatary class that passes through. thats why:--->
+					//------User.php(Model)-----------------
+						public function visits()
+						{
+							return $this->hasManyThrough(Visit::class, Link::class);
+						}
+		-- <a href="/dashboard/links/new" class="btn btn-primary">Add Link</a>
+		-- <td><a href="/dashboard/links/{{ $link->id }}">Edit</a></td>
+		-- {{ $link->latest_visit ? $link->latest_visit->created_at->format('M j Y - H:ia') : 'N/A' }}		// Aug 3, 2021 - 12:30pm
+		-- if ($link->user_id !== Auth::id()) {
+					return abort(404);						//will redirect 404 page
+			}
+		-- <input type="text" id="name" name="name" class="form-control{{ $errors->first('name') ? ' is-invalid' : '' }}" placeholder="My YouTube Channel" value="{{ old('name') }}">
+			@if ($errors->first('name'))
+				<div class="invalid-feedback">{{ $errors->first('name') }}</div>
+			@endif
+		-- <form id="delete-form" method="post" action="/dashboard/links/{{ $link->id }}">
+				@csrf
+				@method('DELETE')
+			</form>
+			--- --- --- ---
+			<button type="button" class="btn btn-secondary"
+						onclick="event.preventDefault(); document.getElementById('delete-form').submit();">Delete Link
+			</button>
+		--
+//------------//------------//------------//---------------//---------------//-------------//-----------//------------//--------------//---------
+
+
+
+
+
+
+
+//==================================================================================================
+											------------------ Project-Details -----------------------
+//==================================================================================================
+		--Project-Details :
+				--This is a demo application showing how to create a linktr.ee clone using the Laravel PHP framework.
+
+				--This project comprises three simple data models and related tables:
+						--"Users" are individual accounts that a person can create on the app
+						--"Links" belong to a User and hold both a name and a valid URL
+						--"Visits" track each click that occurs on a particular link and records the info associated with it
+					This demo app makes use of Laravel's default bootstrapped views and authentication routes. There's a very basic dashboard that a user is directed to after logging in where they can see their links, view the amount of visits for each, add a new link, or modify the display settings on their link page.
+
+				--Visiting a particular user's links page displays a simple list of their added links, with the background color and text color they selected on their settings page.
+
+		--Database Schema :
+				--Visit this - https://github.com/Shahed-Chy-Suzan/linktree-clone/blob/master/z_others/db-linktree-clone.png
+
+
+
+
+
+//==================================================================================================
+											------------------ Start Project -----------------------
+//==================================================================================================
+		-- 1 --install laravel-7 command : composer create-project --prefer-dist laravel/laravel:^7.0 linktree-clone
+		
+		
+//--------------------------------------------------- .ENV -------------------------------------------------------------------------------------------
+				 DB_DATABASE=linktree-clone
+				 
+				 
+				 
+//--amader project e "Users" table er model deya ache tai baki 2ta table er jonno jabotiyo kaj korbo ekn.
+
+		--command: php artisan make:model Link --migration
+		--command: php artisan make:model Visit --migration
+
+
+
+//--------------------------------database/migration/users--------------------------------------------------------------------
+				Schema::create('users', function (Blueprint $table) {
+					$table->id();
+					$table->string('email')->unique();
+					$table->string('username')->unique();
+					$table->string('password');
+					$table->string('background_color')->default('#ffffff');
+					$table->string('text_color')->default('#000000');
+					$table->rememberToken();
+					$table->timestamps();
+				});
+
+
+//--------------------------------database/migration/links--------------------------------------------------------------------
+			        Schema::create('links', function (Blueprint $table) {
+						$table->id();
+						$table->integer('user_id');
+						$table->string('name');
+						$table->text('link');
+						$table->timestamps();
+					});
+
+//--------------------------------database/migration/visits--------------------------------------------------------------------
+				Schema::create('visits', function (Blueprint $table) {
+					$table->id();
+					$table->integer('link_id');
+					$table->text('user_agent');
+					$table->timestamps();
+				});
+
+
+//--------------------------------app/User (model)---------------------------------------------------------------------------------
+			protected $fillable = [
+				'username', 'email', 'password', 'background_color', 'text_color'
+			];
+
+			public function links()
+			{
+				return $this->hasMany(Link::class);
+			}
+
+			public function visits()
+			{
+				return $this->hasManyThrough(Visit::class, Link::class);
+			}
+					//--ekhane each visits belongsTo a links, and that links belongsTo an User.	 Now however if we skip links table and want to see how many visits a particular user's has in his account, this relationship is--> goto User Model, make a "hasManyThrough" relation,//here hasManyThrough accept two argumant (1) the final class u want to collect & (2) the intermediatary class that passes through.
+
+			public function getRouteKeyName() {
+				return 'username';
+			}
+					//--amra UserController er @show method e Route-Model binding e return $user korechilam && then browser route/url e "domain/admin" (admin=username) diyechi error dicchilo, but "domain/1" (1=id) dile sob oi user er sob info json format e dekhachhilo jodio amra chacchilam username dile show korte tail ekn UserController e eshe ei "getRouteKeyName()" function ta likhechi jar fole amader browser url e "domain/admin" (admin=username) likleo User er sob info show hocchilo.
+		}
+//---------------//-------------//--------------//-----------------//------------------//-----------------//----
+
+
+
+			
+//--------------------------------app/Link (model)----------------------------------------------------------------------------------
+			protected $guarded = [];
+
+			public function user()
+			{
+				return $this->belongsTo(User::class);
+			}
+
+			public function visits()
+			{
+				return $this->hasMany(Visit::class);
+			}
+
+			// public function latest_visit()
+			// {
+			//     return $this->hasOne(Visit::class)->latest();
+			// }
+//----------------//----------------------------//---------------------------------------------------
+
+
+//--------------------------------app/Visit (model)----------------------------------------------------------------------------------
+			protected $guarded = [];
+
+			public function link()
+			{
+				return $this->belongsTo(Link::class);
+			}
+//----------------//----------------------------//---------------------------------------------------			
+	
+//--------------------------------------------------------------------------------------------------------------------------		
+			
+			
+			
+			
+//-------------run Command: php artisan migrate
+			
+			
+			
+//-------------------------------------------------------web.php----------------------------------------------------------------------------------
+			<?php
+
+			use Illuminate\Support\Facades\Route;
+			use Illuminate\Support\Facades\Auth;
+
+
+			Route::get('/', function () {
+				return view('welcome');
+			});
+
+			Auth::routes();
+
+			//linktree.com/dashboard
+			Route::group(['middleware' => 'auth', 'prefix' => 'dashboard'], function() {
+
+				//linktree.com/dashboard/links
+				Route::get('/links', 'LinkController@index');
+				Route::get('/links/new', 'LinkController@create');
+				Route::post('/links/new', 'LinkController@store');
+				Route::get('/links/{link}', 'LinkController@edit');
+				Route::post('/links/{link}', 'LinkController@update');
+				Route::delete('/links/{link}', 'LinkController@destroy');
+
+				Route::get('/settings', 'UserController@edit');
+				Route::post('/settings', 'UserController@update');
+
+			});
+
+			//linktree.com/visit/
+			Route::post('/visit/{link}', 'VisitController@store');
+			//linktree.com/username
+			Route::get('{user}', 'UserController@show');
+
+			Route::get('/home', 'HomeController@index')->name('home');
+
+			
+			
+			
+			
+//---------------------------------------------------auth---------------------------------------------------------------------------------------------
+			-- 1 -- command: composer require laravel/ui
+			-- 2 -- command: php artisan ui bootstrap --auth
+			-- 3 -- command: npm install
+			-- 4 -- command: npm run dev
+			
+		//----------------in web.php----------------------------
+				Auth::routes();
+			
+			
+			
+			
+			
+			
+//------------------------------------------------views/auth/register.blade.php------------------------------------------------------------------------		
+			@extends('layouts.app')
+
+			@section('content')
+			<div class="container">
+				<div class="row justify-content-center">
+					<div class="col-md-8">
+						<div class="card">
+							<div class="card-header">{{ __('Register') }}</div>
+
+							<div class="card-body">
+								<form method="POST" action="{{ route('register') }}">
+									@csrf
+
+									<div class="form-group row">
+										<label for="email" class="col-md-4 col-form-label text-md-right">{{ __('E-Mail Address') }}</label>
+
+										<div class="col-md-6">
+											<input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email">
+
+											@error('email')
+												<span class="invalid-feedback" role="alert">
+													<strong>{{ $message }}</strong>
+												</span>
+											@enderror
+										</div>
+									</div>
+
+									<div class="form-group row">
+										<label for="username" class="col-md-4 col-form-label text-md-right">{{ __('Username') }}</label>
+
+										<div class="col-md-6">
+											<input id="username" type="text" class="form-control @error('username') is-invalid @enderror" name="username" value="{{ old('username') }}" required autocomplete="username" autofocus>
+
+											@error('username')
+											<span class="invalid-feedback" role="alert">
+													<strong>{{ $message }}</strong>
+												</span>
+											@enderror
+										</div>
+									</div>
+
+									<div class="form-group row">
+										<label for="password" class="col-md-4 col-form-label text-md-right">{{ __('Password') }}</label>
+
+										<div class="col-md-6">
+											<input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password">
+
+											@error('password')
+												<span class="invalid-feedback" role="alert">
+													<strong>{{ $message }}</strong>
+												</span>
+											@enderror
+										</div>
+									</div>
+
+									<div class="form-group row">
+										<label for="password-confirm" class="col-md-4 col-form-label text-md-right">{{ __('Confirm Password') }}</label>
+
+										<div class="col-md-6">
+											<input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
+										</div>
+									</div>
+
+									<div class="form-group row mb-0">
+										<div class="col-md-6 offset-md-4">
+											<button type="submit" class="btn btn-primary">
+												{{ __('Register') }}
+											</button>
+										</div>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			@endsection
+			
+
+
+//-----------------------------------------------Controller/Auth/RegisterController------------------------------------------------------------------------				protected function validator(array $data)
+			{
+				return Validator::make($data, [
+					'username' => ['required', 'string', 'max:255'],
+					'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+					'password' => ['required', 'string', 'min:8', 'confirmed'],
+				]);
+			}
+
+			/**
+			 * Create a new user instance after a valid registration.
+			 *
+			 * @param  array  $data
+			 * @return \App\User
+			 */
+			protected function create(array $data)
+			{
+				return User::create([
+					'username' => $data['username'],
+					'email' => $data['email'],
+					'password' => Hash::make($data['password']),
+				]);
+			}
+//----------------//-----------------//--------------------//--------------------//-----------------//----------------//-			
+			
+			
+			
+			
+//-------------------------------------------------make:Controller----------------------------------------------------------------------------------
+			-- 1 -- command: php artisan make:controller UserController
+			-- 2 -- command: php artisan make:controller LinkController
+			-- 3 -- command: php artisan make:controller VisitController
+
+
+			
+//----Laravel Login korar por amader k auto "/home" e patiye dei, but amader eikhane project e amader k login er por jethe hobe "/dashboard/links" e , tai amader k ekn eta change korar jonno LoginController.php te giye 29 no line er "RouteServiceProvider::HOME;"	e alt+click kore "app/Providers/RouteServiceProvider.php" te giye 24 no line "public const HOME = '/dashboard/links';" kore diyechi, aghe chilo "public const HOME = '/home';"
+			
+//--created--
+		--resources
+				--views
+						--links
+								--index.blade.php
+								--edit.blade.php
+								--create.blade.php
+			
+			
+			
+//---------------------------------------------LinkController------------------------------------------------------------------------
+			<?php
+
+			namespace App\Http\Controllers;
+
+			use Illuminate\Http\Request;
+			use App\Link;
+			use Illuminate\Support\Facades\Auth;
+
+			class LinkController extends Controller
+			{
+
+				public function index()
+				{
+					$links = Auth::user()->links()
+						->withCount('visits')
+						->with('latest_visit')
+						->get();
+
+					return view('links.index', [
+						'links' => $links
+					]);
+				}
+
+				public function create()
+				{
+					return view('links.create');
+				}
+
+				public function store(Request $request)
+				{
+					$request->validate([
+						'name' => 'required',
+						'link' => 'required|url'
+					]);
+
+					$link = Auth::user()->links()
+						->create($request->only(['name', 'link']));
+
+					if ($link) {
+						return redirect()->to('/dashboard/links');
+					}
+
+					return redirect()->back();
+				}
+
+				public function edit(Link $link)
+				{
+					if ($link->user_id !== Auth::id()) {
+						return abort(404);
+					}
+
+					return view('links.edit', [
+						'link' => $link
+					]);
+				}
+
+				public function update(Link $link, Request $request)
+				{
+					if ($link->user_id !== Auth::id()) {
+						return abort(403);
+					}
+
+					$request->validate([
+						'name' => 'required',
+						'link' => 'required|url'
+					]);
+
+					$link->update($request->only(['name', 'link']));
+
+					return redirect()->to('/dashboard/links');
+				}
+
+				public function destroy(Link $link, Request $request)
+				{
+					if ($link->user_id !== Auth::id()) {
+						return abort(403);
+					}
+
+					$link->delete();
+
+					return redirect()->to('/dashboard/links');
+				}
+
+			}
+
+
+			
+//--------------------------------------------links/index.blade.php----------------------------------------------------------------	
+			@extends('layouts.app')
+			@section('content')
+				<div class="container">
+					<div class="row">
+						<div class="col-12 card">
+							<div class="card-body">
+								<h2 class="card-title">Your links</h2>
+								<table class="table table-striped">
+									<thead>
+										<tr>
+											<th scope="col">Name</th>
+											<th scope="col">Url</th>
+											<th scope="col">Visits</th>
+											<th scope="col">Last Visit</th>
+											<th scope="col">Actions</th>
+										</tr>
+									</thead>
+									<tbody>
+										@foreach($links as $link)
+											<tr>
+												<td>{{ $link->name }}</td>
+												<td><a href="{{ $link->link }}">{{ $link->link }}</a></td>
+												<td>{{ $link->visits_count }}</td>
+												<td>{{ $link->latest_visit ? $link->latest_visit->created_at->format('M j Y - H:ia') : 'N/A' }}</td>
+												<td><a href="/dashboard/links/{{ $link->id }}">Edit</a></td>
+											</tr>
+										@endforeach
+									</tbody>
+								</table>
+								<a href="/dashboard/links/new" class="btn btn-primary">Add Link</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			@endsection
+
+			
+			
+//--------------------------------------------links/create.blade.php----------------------------------------------------------------				
+			@extends('layouts.app')
+			@section('content')
+				<div class="container">
+					<div class="row">
+						<div class="col-12 card">
+							<div class="card-body">
+								<h2 class="card-title">Create a new link</h2>
+								<form action="/dashboard/links/new" method="post">
+									<div class="row">
+										<div class="col-12 col-md-6">
+											<div class="form-group">
+												<label for="name">Link Name</label>
+												<input type="text" id="name" name="name" class="form-control{{ $errors->first('name') ? ' is-invalid' : '' }}" placeholder="My YouTube Channel" value="{{ old('name') }}">
+												@if ($errors->first('name'))
+													<div class="invalid-feedback">{{ $errors->first('name') }}</div>
+												@endif
+											</div>
+										</div>
+										<div class="col-12 col-md-6">
+											<div class="form-group">
+												<label for="link">Link URL</label>
+												<input type="text" id="link" name="link" class="form-control{{ $errors->first('link') ? ' is-invalid' : '' }}" placeholder="https://youtube.com/user/aschmelyun" value="{{ old('link') }}">
+												@if ($errors->first('link'))
+													<div class="invalid-feedback">{{ $errors->first('link') }}</div>
+												@endif
+											</div>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-12">
+											@csrf
+											<button type="submit" class="btn btn-primary">Save Link</button>
+										</div>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+				</div>
+			@endsection
+
+
+//--------------------------------------------links/edit.blade.php----------------------------------------------------------------	
+			@extends('layouts.app')
+			@section('content')
+				<div class="container">
+					<div class="row">
+						<div class="col-12 card">
+							<div class="card-body">
+								<h2 class="card-title">Editing link</h2>
+								<form action="/dashboard/links/{{ $link->id }}" method="post">
+									<div class="row">
+										<div class="col-12 col-md-6">
+											<div class="form-group">
+												<label for="name">Link Name</label>
+												<input type="text" id="name" name="name" class="form-control" placeholder="My YouTube Channel" value="{{ $link->name }}">
+											</div>
+										</div>
+										<div class="col-12 col-md-6">
+											<div class="form-group">
+												<label for="name">Link URL</label>
+												<input type="text" id="link" name="link" class="form-control" placeholder="https://youtube.com/user/aschmelyun" value="{{ $link->link }}">
+											</div>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-12">
+											@csrf
+											<button type="submit" class="btn btn-primary">Update Link</button>
+											<button type="button" class="btn btn-secondary"
+													onclick="event.preventDefault(); document.getElementById('delete-form').submit();">Delete Link</button>
+										</div>
+									</div>
+								</form>
+								<form id="delete-form" method="post" action="/dashboard/links/{{ $link->id }}">
+									@csrf
+									@method('DELETE')
+								</form>
+							</div>
+						</div>
+					</div>
+				</div>
+			@endsection
+
+						
+						
+//--created--
+		--resources
+				--views
+						--users
+								--show.blade.php
+								--edit.blade.php	
+			
+			
+			
+//---------------------------------------------UserController------------------------------------------------------------------------
+			<?php
+
+			namespace App\Http\Controllers;
+
+			use Illuminate\Http\Request;
+			use App\User;
+			use Illuminate\Support\Facades\Auth;
+
+			class UserController extends Controller
+			{
+
+				public function show(User $user)
+				{
+					$backgroundColor = $user->background_color;
+					$textColor = $user->text_color;
+
+					$user->load('links');
+
+					return view('users.show', [
+						'user' => $user,
+						'backgroundColor' => $backgroundColor,
+						'textColor' => $textColor
+					]);
+				}
+
+				public function edit()
+				{
+					return view('users.edit', [
+						'user' => Auth::user()
+					]);
+				}
+
+				public function update(Request $request)
+				{
+					$request->validate([
+						'background_color' => 'required|size:7|starts_with:#',
+						'text_color' => 'required|size:7|starts_with:#'
+					]);
+
+					Auth::user()->update($request->only(['background_color', 'text_color']));
+
+					return redirect()->back()->with(['success' => 'Changes saved successfully!']);
+				}
+
+			}
+
+			
+//--------------------------------------------users/show.blade.php----------------------------------------------------------------	
+		//route/url: doamin/username 		//http://127.0.0.1:8000/admin
+			
+			@extends('layouts.app')
+			@section('content')
+				<div class="container">
+					<div class="row">
+						<div class="col-12 col-md-6 offset-md-3">
+							@foreach($user->links as $link)
+								<div class="link">
+									<a
+										class="user-link d-block p-4 mb-4 rounded h3 text-center"
+										style="border: 2px solid {{ $textColor }}; color: {{ $textColor }}"
+										href="{{ $link->link }}"
+										target="_blank"
+										rel="nofollow"
+										data-link-id="{{ $link->id }}"
+									>
+										{{ $link->name }}
+									</a>
+								</div>
+							@endforeach
+						</div>
+					</div>
+				</div>
+			@endsection
+
+			
+//--------------------------------------------users/edit.blade.php----------------------------------------------------------------
+			@extends('layouts.app')
+			@section('content')
+				<div class="container">
+					<div class="row">
+						<div class="col-12 card">
+							<div class="card-body">
+								<h2 class="card-title">Your settings</h2>
+								<form action="/dashboard/settings" method="post">
+									<div class="row">
+										<div class="col-12 col-md-6">
+											<div class="form-group">
+												<label for="background_color">Background Color</label>
+												<input type="text" id="background_color" name="background_color" class="form-control{{ $errors->first('background_color') ? ' is-invalid' : '' }}" placeholder="#ffffff" value="{{ $user->background_color }}">
+												@if($errors->first('background_color'))
+													<div class="invalid-feedback">{{ $errors->first('background_color') }}</div>
+												@endif
+											</div>
+										</div>
+										<div class="col-12 col-md-6">
+											<div class="form-group">
+												<label for="text_color">Text Color</label>
+												<input type="text" id="text_color" name="text_color" class="form-control{{ $errors->first('text_color') ? ' is-invalid' : '' }}" placeholder="#000000" value="{{ $user->text_color }}">
+												@if($errors->first('text_color'))
+													<div class="invalid-feedback">{{ $errors->first('text_color') }}</div>
+												@endif
+											</div>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-12">
+											@csrf
+											<button type="submit" class="btn btn-primary{{ session('success') ? ' is-valid' : '' }}">Save Settings</button>
+											@if(session('success'))
+												<div class="valid-feedback">{{ session('success') }}</div>
+											@endif
+										</div>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+				</div>
+			@endsection
+
+
+//--------------------------------------------resources/js/app.js----------------------------------------------------------------------
+			$('.user-link').click(function(e) {
+				// store the visit asynchronously without interrupting the link opening
+				axios.post('/visit/' + $(this).data('link-id'), {
+					link: $(this).attr('href')
+				})
+					.then(response => console.log('response: ', response))
+					.catch(error => console.error('error: ', error));
+			});
+
+
+//-----------------------------------------------VisitController.php------------------------------------------------------------------------
+				<?php
+
+				namespace App\Http\Controllers;
+
+				use Illuminate\Http\Request;
+				use App\Link;
+
+				class VisitController extends Controller
+				{
+
+					public function store(Link $link, Request $request)
+					{
+						if ($link->link !== $request->input('link')) {
+							return abort(403);
+						}
+
+						return $link->visits()
+							->create([
+								'user_agent' => $request->userAgent()
+							]);
+					}
+
+				}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
