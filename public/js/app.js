@@ -37345,6 +37345,17 @@ module.exports = function(module) {
 
 __webpack_require__(/*! ./bootstrap */ "./resources/js/bootstrap.js");
 
+$('.user-link').click(function (e) {
+  // store the visit asynchronously without interrupting the link opening
+  axios.post('/visit/' + $(this).data('link-id'), {
+    link: $(this).attr('href')
+  }).then(function (response) {
+    return console.log('response: ', response);
+  })["catch"](function (error) {
+    return console.error('error: ', error);
+  });
+});
+
 /***/ }),
 
 /***/ "./resources/js/bootstrap.js":

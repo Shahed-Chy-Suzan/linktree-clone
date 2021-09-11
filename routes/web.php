@@ -29,6 +29,6 @@ Route::group(['middleware' => 'auth', 'prefix' => 'dashboard'], function() {
 //linktree.com/visit/
 Route::post('/visit/{link}', 'VisitController@store');
 //linktree.com/username
-Route::get('{user}', 'UserController@show');
+Route::get('/dashboard/{user}', 'UserController@show');
 
 Route::get('/home', 'HomeController@index')->name('home');

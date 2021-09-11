@@ -32,6 +32,7 @@ class UserController extends Controller
 
     public function update(Request $request)
     {
+        //always want a full Hexadecimel, e.g. #ff00ff
         $request->validate([
             'background_color' => 'required|size:7|starts_with:#',
             'text_color' => 'required|size:7|starts_with:#'
